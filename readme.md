@@ -94,14 +94,5 @@ Uses Google Gemini API to generate contextual questions with:
 - `DATABASE_URL`: PostgreSQL connection string
 - Gemini API key provided by users at runtime
 
-## Recent Changes
-- June 25, 2025: Fixed Gemini API quota exhaustion by implementing robust fallback system
-- June 25, 2025: Resolved TypeScript compilation errors in question generation
-- June 25, 2025: Quiz now auto-generates questions using fallback when API is unavailable
-- June 25, 2025: Created 50+ high-quality fallback questions covering all required topics
-- June 25, 2025: Fixed React Query session loading issue - quiz properly auto-generates first question
-- June 25, 2025: Initial setup with professional UI and timer systems
-
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
