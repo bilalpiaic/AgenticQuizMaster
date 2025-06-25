@@ -22,14 +22,19 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
   const [feedbackData, setFeedbackData] = useState<any>(null);
   const [showResults, setShowResults] = useState(false);
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+  const [hasInitialized, setHasInitialized] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Fetch quiz session
-  const { data: session, isLoading: sessionLoading } = useQuery<QuizSession>({
-    queryKey: ['/api/quiz/session', sessionId],
+  const { data: session, isLoading: sessionLoading, error: sessionError } = useQuery<QuizSession>({
+    queryKey: [`/api/quiz/session/${sessionId}`],
     refetchInterval: 30000, // Refetch every 30 seconds to sync timer
+    retry: 3,
+    retryDelay: 1000,
   });
+
+
 
   // Quiz timer hook
   const { totalTimeLeft, questionTimeLeft, startQuestionTimer, stopQuestionTimer } = useQuizTimer({
@@ -43,6 +48,9 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
   const generateQuestionMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", `/api/quiz/session/${sessionId}/question`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       return response.json();
     },
     onSuccess: (question: Question) => {
@@ -51,10 +59,11 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
       setQuestionStartTime(Date.now());
       startQuestionTimer(question.timeAllotted);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      setHasInitialized(false); // Reset so user can retry
       toast({
         title: "Error",
-        description: "Failed to generate question. Please try again.",
+        description: `Failed to generate question: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     },
@@ -70,7 +79,7 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
       setFeedbackData(data);
       setShowFeedback(true);
       stopQuestionTimer();
-      queryClient.invalidateQueries({ queryKey: ['/api/quiz/session', sessionId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/quiz/session/${sessionId}`] });
     },
     onError: (error) => {
       toast({
@@ -89,13 +98,13 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
     },
   });
 
-  // Initialize first question
+  // Initialize first question when session is loaded
   useEffect(() => {
-    if (session && !sessionLoading && !currentQuestion && !generateQuestionMutation.isPending && !session.isCompleted) {
-      console.log('Generating first question for session:', session.id);
-      generateQuestionMutation.mutate();
+    if (session && !hasInitialized && !currentQuestion && !session.isCompleted && !generateQuestionMutation.isPending) {
+      setHasInitialized(true);
+      setTimeout(() => generateQuestionMutation.mutate(), 50);
     }
-  }, [session, sessionLoading, currentQuestion, generateQuestionMutation.isPending]);
+  }, [session?.id, hasInitialized, currentQuestion, generateQuestionMutation.isPending]);
 
   // Update server timer periodically
   useEffect(() => {
@@ -126,6 +135,7 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
   const handleNextQuestion = () => {
     setShowFeedback(false);
     setFeedbackData(null);
+    setCurrentQuestion(null);
     
     if (session && session.currentQuestion >= session.totalQuestions) {
       handleQuizComplete();
@@ -157,8 +167,29 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
     setSelectedAnswer(null);
   };
 
-  if (!session || sessionLoading) {
+  if (sessionLoading) {
     return <LoadingOverlay message="Loading quiz session..." />;
+  }
+
+  if (sessionError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-2">Session Error</h2>
+          <p className="text-gray-600 mb-4">{sessionError.message}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <LoadingOverlay message="Session not found..." />;
   }
 
   const progressPercent = (session.currentQuestion / session.totalQuestions) * 100;
