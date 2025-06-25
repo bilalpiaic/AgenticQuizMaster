@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle } from "lucide-react";
 
@@ -26,7 +26,8 @@ export function AnswerFeedbackModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" aria-describedby="feedback-description">
+        <DialogTitle className="sr-only">Answer Feedback</DialogTitle>
         {/* Result Header */}
         <div className="text-center mb-6">
           <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${

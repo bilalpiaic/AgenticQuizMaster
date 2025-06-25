@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { GeminiService } from "./services/gemini";
+import { getFallbackQuestion } from "./services/fallback-questions";
 import { insertQuizSessionSchema, answerQuestionSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -88,11 +89,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Question ${questionNumber} created successfully`);
       res.json(question);
     } catch (error: any) {
-      console.error("Question generation error:", error);
-      res.status(500).json({ 
-        error: "Failed to generate question", 
-        details: error.message 
-      });
+      console.error("Question generation failed, using fallback:", error);
+      
+      try {
+        // Always use fallback when API fails
+        const fallbackQuestion = getFallbackQuestion(questionNumber, category, difficulty, type);
+        
+        // Store fallback question in database
+        const question = await storage.createQuestion({
+          sessionId,
+          questionNumber,
+          category: fallbackQuestion.category,
+          difficulty: fallbackQuestion.difficulty,
+          type: fallbackQuestion.type,
+          title: fallbackQuestion.title,
+          content: fallbackQuestion.content,
+          codeExample: fallbackQuestion.codeExample,
+          options: fallbackQuestion.options,
+          correctAnswerIndex: fallbackQuestion.correctAnswerIndex,
+          explanation: fallbackQuestion.explanation,
+          timeAllotted: fallbackQuestion.timeAllotted,
+        });
+
+        // Update session progress
+        await storage.updateQuizSession(sessionId, {
+          currentQuestion: questionNumber
+        });
+
+        console.log(`Fallback question ${questionNumber} created successfully`);
+        return res.json(question);
+      } catch (fallbackError: any) {
+        console.error("Fallback question creation failed:", fallbackError);
+        return res.status(500).json({ 
+          error: "Unable to generate question", 
+          details: fallbackError.message 
+        });
+      }
     }
   });
 

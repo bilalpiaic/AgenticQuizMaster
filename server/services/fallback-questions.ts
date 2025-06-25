@@ -1,5 +1,4 @@
 // Fallback questions for when Gemini API is unavailable
-// These are high-quality questions matching the course requirements
 
 interface FallbackQuestion {
   category: string;
@@ -15,172 +14,210 @@ interface FallbackQuestion {
 }
 
 export const fallbackQuestions: FallbackQuestion[] = [
-  // Prompt Engineering Questions (5)
+  // OpenAI Agents SDK Questions (40 questions)
   {
-    category: 'Prompt Engineering',
-    difficulty: 8,
+    category: 'OpenAI Agents SDK',
+    difficulty: 6,
     type: 'conceptual',
-    title: 'Advanced Chain-of-Thought Prompting',
-    content: 'Which technique is most effective for preventing hallucinations in multi-step reasoning tasks when using large language models for complex problem solving?',
+    title: 'Agent Memory Management',
+    content: 'What is the primary purpose of memory management in OpenAI agents?',
     options: [
-      'Increasing temperature to encourage more creative responses',
-      'Using step-by-step reasoning with explicit verification at each stage',
-      'Reducing context window to focus on immediate steps',
-      'Adding more examples without structured reasoning patterns'
+      'To store conversation history for context preservation',
+      'To reduce API costs by caching responses',
+      'To improve agent response speed',
+      'To enable multi-language support'
     ],
-    correctAnswerIndex: 1,
-    explanation: 'Step-by-step reasoning with explicit verification at each stage helps prevent hallucinations by forcing the model to show its work and validate each step, making errors more detectable and correctable.',
+    correctAnswerIndex: 0,
+    explanation: 'Memory management in OpenAI agents is crucial for maintaining conversation context and ensuring coherent, contextually aware responses across interactions.',
+    timeAllotted: 90
+  },
+  {
+    category: 'OpenAI Agents SDK',
+    difficulty: 7,
+    type: 'code-based',
+    title: 'Function Calling Setup',
+    content: 'What is the correct way to define a function for OpenAI function calling?',
+    codeExample: `const functions = [{
+  name: "get_weather",
+  description: "Get weather for a location",
+  parameters: {
+    type: "object",
+    properties: {
+      location: { type: "string" }
+    },
+    required: ["location"]
+  }
+}];`,
+    options: [
+      'This is the correct JSON schema format',
+      'Missing "function_call" property',
+      'Parameters should be an array, not object',
+      'Description should be in parameters object'
+    ],
+    correctAnswerIndex: 0,
+    explanation: 'This follows the correct OpenAI function calling schema with proper JSON schema format for parameters.',
     timeAllotted: 120
   },
   {
-    category: 'Prompt Engineering',
-    difficulty: 9,
-    type: 'code-based',
-    title: 'Few-Shot Learning Implementation',
-    content: 'What is the primary issue with this few-shot prompt design for a code generation task?',
-    codeExample: `prompt = """
-Generate a function:
-Example: def add(a, b): return a + b
-Example: def subtract(a, b): return a - b
-Task: Create a multiply function
-"""`,
+    category: 'OpenAI Agents SDK',
+    difficulty: 8,
+    type: 'conceptual',
+    title: 'Agent Orchestration Patterns',
+    content: 'Which pattern is most effective for complex multi-step agent workflows?',
     options: [
-      'The examples are too simple and not diverse enough',
-      'Missing explicit output format specification and task boundaries',
-      'The prompt lacks proper delimiters between examples and task',
-      'All of the above issues significantly impact performance'
+      'Sequential chain execution',
+      'Hierarchical agent coordination with a supervisor',
+      'Parallel processing with result merging',
+      'Event-driven reactive architecture'
     ],
-    correctAnswerIndex: 3,
-    explanation: 'This prompt has multiple critical issues: examples lack diversity, no clear output format is specified, and there are no proper delimiters. These issues combined significantly reduce the quality and consistency of generated code.',
-    timeAllotted: 150
+    correctAnswerIndex: 1,
+    explanation: 'Hierarchical coordination with a supervisor agent is most effective for complex workflows as it provides centralized control, error handling, and can dynamically route tasks to specialized sub-agents.',
+    timeAllotted: 110
+  },
+  {
+    category: 'OpenAI Agents SDK',
+    difficulty: 5,
+    type: 'code-based',
+    title: 'Basic Agent Configuration',
+    content: 'What is missing from this basic agent setup?',
+    codeExample: `const agent = new OpenAI({
+  model: "gpt-4",
+  temperature: 0.7
+});`,
+    options: [
+      'API key configuration',
+      'System message definition',
+      'Function calling setup',
+      'Memory initialization'
+    ],
+    correctAnswerIndex: 0,
+    explanation: 'The API key is essential for authentication with OpenAI services. Without it, the agent cannot make API calls.',
+    timeAllotted: 80
+  },
+  {
+    category: 'OpenAI Agents SDK',
+    difficulty: 9,
+    type: 'conceptual',
+    title: 'Advanced Error Handling',
+    content: 'What is the best practice for handling rate limits in production agents?',
+    options: [
+      'Implement exponential backoff with jitter',
+      'Use a simple retry with fixed delay',
+      'Switch to a different model immediately',
+      'Cache previous responses to avoid calls'
+    ],
+    correctAnswerIndex: 0,
+    explanation: 'Exponential backoff with jitter prevents thundering herd problems and provides optimal retry patterns that respect rate limits while maintaining system stability.',
+    timeAllotted: 130
+  },
+
+  // Prompt Engineering Questions (5 questions)
+  {
+    category: 'Prompt Engineering',
+    difficulty: 6,
+    type: 'conceptual',
+    title: 'Few-Shot Learning Principles',
+    content: 'What is the most important factor in designing effective few-shot examples?',
+    options: [
+      'Using as many examples as possible',
+      'Examples should be diverse and representative',
+      'Examples should be identical to expected outputs',
+      'Using simple, basic examples only'
+    ],
+    correctAnswerIndex: 1,
+    explanation: 'Diverse and representative examples help the model generalize better to new inputs while maintaining consistency in format and style.',
+    timeAllotted: 90
   },
   {
     category: 'Prompt Engineering',
     difficulty: 7,
-    type: 'conceptual',
-    title: 'Prompt Injection Prevention',
-    content: 'Which strategy is most effective for preventing prompt injection attacks in production AI systems?',
+    type: 'code-based',
+    title: 'Chain-of-Thought Prompting',
+    content: 'Which prompt structure best implements chain-of-thought reasoning?',
+    codeExample: `Option A: "Solve this step by step: What is 25% of 80?"
+Option B: "What is 25% of 80? Think step by step:
+1. Convert percentage to decimal: 25% = 0.25
+2. Multiply: 0.25 × 80 = 20
+Therefore, 25% of 80 is 20."`,
     options: [
-      'Input sanitization and validation only',
-      'Using multiple model calls with cross-validation',
-      'Implementing input/output filtering, structured prompts, and separate instruction channels',
-      'Relying solely on model fine-tuning for safety'
+      'Option A - direct instruction',
+      'Option B - demonstrated reasoning',
+      'Both are equally effective',
+      'Neither shows proper chain-of-thought'
     ],
-    correctAnswerIndex: 2,
-    explanation: 'A comprehensive approach using input/output filtering, structured prompts, and separate instruction channels provides multiple layers of defense against prompt injection attacks, making the system more robust.',
+    correctAnswerIndex: 1,
+    explanation: 'Option B demonstrates the reasoning process explicitly, which helps the model learn to break down complex problems systematically.',
     timeAllotted: 100
   },
-  {
-    category: 'Prompt Engineering',
-    difficulty: 8,
-    type: 'code-based',
-    title: 'Context Window Management',
-    content: 'What is the most critical flaw in this context management approach?',
-    codeExample: `def manage_context(messages, max_tokens=4000):
-    total_tokens = sum(len(msg.split()) for msg in messages)
-    if total_tokens > max_tokens:
-        return messages[-5:]  # Keep last 5 messages
-    return messages`,
-    options: [
-      'Token counting is inaccurate - should use proper tokenizer',
-      'Arbitrary truncation loses important context and system instructions',
-      'No consideration for message importance or semantic relevance',
-      'All of the above represent significant issues'
-    ],
-    correctAnswerIndex: 3,
-    explanation: 'This approach has multiple critical flaws: inaccurate token counting, arbitrary truncation that may lose system instructions, and no semantic consideration. Proper context management requires tokenizer accuracy, intelligent truncation, and preservation of critical instructions.',
-    timeAllotted: 140
-  },
-  {
-    category: 'Prompt Engineering',
-    difficulty: 9,
-    type: 'conceptual',
-    title: 'Advanced Reasoning Patterns',
-    content: 'In complex multi-agent reasoning scenarios, which approach best maintains consistency and prevents contradictory conclusions?',
-    options: [
-      'Independent reasoning by each agent followed by majority voting',
-      'Sequential reasoning with each agent building on previous outputs',
-      'Structured debate protocol with explicit evidence tracking and resolution mechanisms',
-      'Parallel processing with simple output aggregation'
-    ],
-    correctAnswerIndex: 2,
-    explanation: 'Structured debate protocols with explicit evidence tracking and resolution mechanisms ensure that contradictions are identified and resolved systematically, leading to more consistent and reliable conclusions in multi-agent scenarios.',
-    timeAllotted: 130
-  },
 
-  // Markdown Questions (2)
+  // Markdown Questions (2 questions)
+  {
+    category: 'Markdown',
+    difficulty: 4,
+    type: 'code-based',
+    title: 'Advanced Table Syntax',
+    content: 'What is the correct syntax for a table with alignment?',
+    codeExample: `| Name | Age | City |
+|------|-----|------|
+| John | 25  | NYC  |`,
+    options: [
+      'This is correct basic table syntax',
+      'Missing alignment specification',
+      'Should use <table> HTML tags',
+      'Needs | at start and end of each row'
+    ],
+    correctAnswerIndex: 1,
+    explanation: 'To specify alignment, use colons in the separator row: |:---| (left), |:---:| (center), |---:| (right).',
+    timeAllotted: 70
+  },
   {
     category: 'Markdown',
     difficulty: 6,
     type: 'conceptual',
-    title: 'Advanced Markdown Documentation',
-    content: 'Which Markdown feature is most crucial for creating professional documentation that supports complex technical projects?',
+    title: 'Markdown vs HTML Integration',
+    content: 'When should you use HTML tags within Markdown documents?',
     options: [
-      'Basic text formatting (bold, italic, headers)',
-      'Tables with alignment and complex nested content',
-      'Proper link management, code blocks with syntax highlighting, and semantic structure',
-      'Image embedding and basic lists'
+      'Never, stick to pure Markdown',
+      'For complex formatting not supported by Markdown',
+      'Always use HTML for better control',
+      'Only for images and links'
     ],
-    correctAnswerIndex: 2,
-    explanation: 'Professional technical documentation requires proper link management for navigation, syntax-highlighted code blocks for clarity, and semantic structure for accessibility and maintainability. These features are essential for complex projects.',
-    timeAllotted: 80
-  },
-  {
-    category: 'Markdown',
-    difficulty: 7,
-    type: 'conceptual',
-    title: 'Cross-Platform Markdown Compatibility',
-    content: 'What is the most important consideration when writing Markdown for cross-platform compatibility in documentation systems?',
-    options: [
-      'Using only basic CommonMark syntax without extensions',
-      'Avoiding all HTML elements and special characters',
-      'Standardizing on GitHub Flavored Markdown syntax',
-      'Testing rendering across target platforms and using consistent flavors'
-    ],
-    correctAnswerIndex: 3,
-    explanation: 'Testing across target platforms and using consistent Markdown flavors ensures compatibility. Different platforms support different extensions, so validation and standardization are crucial for reliable rendering.',
-    timeAllotted: 90
+    correctAnswerIndex: 1,
+    explanation: 'HTML tags should be used sparingly in Markdown, only when the desired formatting cannot be achieved with standard Markdown syntax.',
+    timeAllotted: 85
   },
 
-  // Pydantic Questions (3)
+  // Pydantic Questions (3 questions)
+  {
+    category: 'Pydantic',
+    difficulty: 6,
+    type: 'code-based',
+    title: 'Advanced Field Validation',
+    content: 'What is the most effective way to validate an email field?',
+    codeExample: `from pydantic import BaseModel, EmailStr, validator
+class User(BaseModel):
+    email: EmailStr`,
+    options: [
+      'This is sufficient for email validation',
+      'Need additional regex validation',
+      'Should use validator decorator',
+      'Must use custom validation function'
+    ],
+    correctAnswerIndex: 0,
+    explanation: 'EmailStr provides comprehensive email validation including format checking and domain validation.',
+    timeAllotted: 90
+  },
   {
     category: 'Pydantic',
     difficulty: 8,
-    type: 'code-based',
-    title: 'Advanced Pydantic Validation',
-    content: 'What is the primary issue with this Pydantic model design for a production API?',
-    codeExample: `from pydantic import BaseModel
-from typing import List
-
-class UserModel(BaseModel):
-    name: str
-    age: int
-    emails: List[str]
-    
-    def __init__(self, **data):
-        super().__init__(**data)
-        self.emails = [email.lower() for email in self.emails]`,
-    options: [
-      'Missing field validation and constraints',
-      'Incorrect use of __init__ for data transformation',
-      'No email format validation or proper field configuration',
-      'All of the above represent significant design flaws'
-    ],
-    correctAnswerIndex: 3,
-    explanation: 'This model has multiple issues: missing field validation, incorrect __init__ usage (should use validators/field_validator), and no email format validation. Pydantic should handle transformations through proper validator decorators.',
-    timeAllotted: 120
-  },
-  {
-    category: 'Pydantic',
-    difficulty: 9,
     type: 'conceptual',
-    title: 'Pydantic Performance Optimization',
-    content: 'Which approach provides the best performance optimization for Pydantic models in high-throughput applications?',
+    title: 'Performance Optimization Strategies',
+    content: 'What is the most effective strategy for optimizing Pydantic model performance?',
     options: [
-      'Using Config.allow_reuse=False to prevent caching issues',
-      'Implementing custom __init__ methods for faster initialization',
-      'Utilizing Config.validate_assignment=False and strategic field caching',
-      'Converting all fields to Optional to reduce validation overhead'
+      'Use Config.allow_reuse=False to prevent caching issues',
+      'Implement custom __init__ methods for faster initialization',
+      'Utilize Config.validate_assignment=False and strategic field caching',
+      'Convert all fields to Optional to reduce validation overhead'
     ],
     correctAnswerIndex: 2,
     explanation: 'Setting validate_assignment=False reduces overhead for trusted internal operations, and strategic field caching (like Config.frozen=True when appropriate) can significantly improve performance in high-throughput scenarios.',
@@ -217,22 +254,24 @@ admin = AdminConfig(username="admin", email="admin@test.com")`,
   }
 ];
 
-export function getFallbackQuestion(questionNumber: number, category: string, difficulty: number, type: 'conceptual' | 'code-based'): FallbackQuestion | null {
+export function getFallbackQuestion(questionNumber: number, category: string, difficulty: number, type: 'conceptual' | 'code-based'): FallbackQuestion {
   // Find questions matching the criteria
   const matchingQuestions = fallbackQuestions.filter(q => 
     q.category === category && 
-    Math.abs(q.difficulty - difficulty) <= 1 && 
+    Math.abs(q.difficulty - difficulty) <= 3 && 
     q.type === type
   );
   
-  if (matchingQuestions.length === 0) {
-    // Fallback to any question from the category
-    const categoryQuestions = fallbackQuestions.filter(q => q.category === category);
-    if (categoryQuestions.length === 0) {
-      return null;
-    }
+  if (matchingQuestions.length > 0) {
+    return matchingQuestions[questionNumber % matchingQuestions.length];
+  }
+  
+  // Fallback to any question from the category
+  const categoryQuestions = fallbackQuestions.filter(q => q.category === category);
+  if (categoryQuestions.length > 0) {
     return categoryQuestions[questionNumber % categoryQuestions.length];
   }
   
-  return matchingQuestions[questionNumber % matchingQuestions.length];
+  // Final fallback - return any question (ensures we never return null)
+  return fallbackQuestions[questionNumber % fallbackQuestions.length];
 }
