@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { getFallbackQuestion } from "./fallback-questions";
 
 interface QuestionGenerationRequest {
   category: string;
@@ -28,44 +29,101 @@ export class GeminiService {
     const systemPrompt = this.buildSystemPrompt(request);
     const userPrompt = this.buildUserPrompt(request);
 
-    try {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        config: {
-          systemInstruction: systemPrompt,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              title: { type: "string" },
-              content: { type: "string" },
-              codeExample: { type: "string" },
-              options: {
-                type: "array",
-                items: { type: "string" },
-                minItems: 4,
-                maxItems: 4
+    console.log(`Generating question for ${request.category}, difficulty ${request.difficulty}, type ${request.type}`);
+
+    // Retry logic with different models
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
+    let lastError: any;
+
+    for (const model of models) {
+      try {
+        console.log(`Trying model: ${model}`);
+        
+        const response = await this.ai.models.generateContent({
+          model,
+          config: {
+            systemInstruction: systemPrompt,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                content: { type: "string" },
+                codeExample: { type: "string" },
+                options: {
+                  type: "array",
+                  items: { type: "string" },
+                  minItems: 4,
+                  maxItems: 4
+                },
+                correctAnswerIndex: { 
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 3
+                },
+                explanation: { type: "string" },
+                timeAllotted: { 
+                  type: "integer",
+                  minimum: 60,
+                  maximum: 300
+                }
               },
-              correctAnswerIndex: { type: "number" },
-              explanation: { type: "string" },
-              timeAllotted: { type: "number" }
-            },
-            required: ["title", "content", "options", "correctAnswerIndex", "explanation", "timeAllotted"]
-          }
-        },
-        contents: userPrompt,
-      });
+              required: ["title", "content", "options", "correctAnswerIndex", "explanation", "timeAllotted"]
+            }
+          },
+          contents: userPrompt,
+        });
 
-      const rawJson = response.text;
-      if (!rawJson) {
-        throw new Error("Empty response from Gemini API");
+        const rawJson = response.text;
+        console.log(`Gemini response received, length: ${rawJson?.length}`);
+        
+        if (!rawJson) {
+          throw new Error("Empty response from Gemini API");
+        }
+
+        const question: GeneratedQuestion = JSON.parse(rawJson);
+        
+        // Validate the response
+        if (!question.title || !question.content || !Array.isArray(question.options) || 
+            question.options.length !== 4 || typeof question.correctAnswerIndex !== 'number' ||
+            question.correctAnswerIndex < 0 || question.correctAnswerIndex > 3) {
+          throw new Error("Invalid question format received from Gemini");
+        }
+
+        console.log(`Question generated successfully: "${question.title}"`);
+        return question;
+      } catch (error: any) {
+        console.error(`Model ${model} failed:`, error.message);
+        lastError = error;
+        
+        // If it's a rate limit or overload error, try next model
+        if (error.message?.includes('503') || error.message?.includes('overloaded') || error.message?.includes('UNAVAILABLE')) {
+          continue;
+        }
+        // For other errors, don't retry
+        break;
       }
-
-      const question: GeneratedQuestion = JSON.parse(rawJson);
-      return question;
-    } catch (error) {
-      throw new Error(`Failed to generate question: ${error}`);
     }
+
+    console.error("All Gemini models failed, using fallback question");
+    
+    // Use fallback question when Gemini is unavailable
+    const fallbackQuestion = getFallbackQuestion(request.questionNumber, request.category, request.difficulty, request.type);
+    
+    if (fallbackQuestion) {
+      console.log(`Using fallback question: "${fallbackQuestion.title}"`);
+      return {
+        title: fallbackQuestion.title,
+        content: fallbackQuestion.content,
+        codeExample: fallbackQuestion.codeExample,
+        options: fallbackQuestion.options,
+        correctAnswerIndex: fallbackQuestion.correctAnswerIndex,
+        explanation: fallbackQuestion.explanation,
+        timeAllotted: fallbackQuestion.timeAllotted,
+      };
+    }
+    
+    throw new Error(`Failed to generate question and no fallback available: ${lastError?.message || lastError}`);
   }
 
   private buildSystemPrompt(request: QuestionGenerationRequest): string {

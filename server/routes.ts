@@ -50,14 +50,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const questionNumber = session.currentQuestion;
       const { category, difficulty, type } = getQuestionMetadata(questionNumber);
       
-      // Generate question using Gemini
+      console.log(`Generating question ${questionNumber}: ${category} (${type}, difficulty ${difficulty})`);
+      
+      // Generate question using Gemini with timeout
       const geminiService = new GeminiService(session.apiKey);
-      const generatedQuestion = await geminiService.generateQuestion({
+      
+      // Add timeout protection
+      const questionPromise = geminiService.generateQuestion({
         category,
         questionNumber,
         difficulty,
         type
       });
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Question generation timeout')), 30000);
+      });
+      
+      const generatedQuestion = await Promise.race([questionPromise, timeoutPromise]) as any;
 
       // Store question in database
       const question = await storage.createQuestion({
@@ -75,10 +85,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeAllotted: generatedQuestion.timeAllotted,
       });
 
+      console.log(`Question ${questionNumber} created successfully`);
       res.json(question);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Question generation error:", error);
-      res.status(500).json({ error: "Failed to generate question" });
+      res.status(500).json({ 
+        error: "Failed to generate question", 
+        details: error.message 
+      });
     }
   });
 
