@@ -26,7 +26,7 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
   const { toast } = useToast();
 
   // Fetch quiz session
-  const { data: session } = useQuery<QuizSession>({
+  const { data: session, isLoading: sessionLoading } = useQuery<QuizSession>({
     queryKey: ['/api/quiz/session', sessionId],
     refetchInterval: 30000, // Refetch every 30 seconds to sync timer
   });
@@ -91,10 +91,11 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
 
   // Initialize first question
   useEffect(() => {
-    if (session && !currentQuestion && !generateQuestionMutation.isPending) {
+    if (session && !sessionLoading && !currentQuestion && !generateQuestionMutation.isPending && !session.isCompleted) {
+      console.log('Generating first question for session:', session.id);
       generateQuestionMutation.mutate();
     }
-  }, [session, currentQuestion]);
+  }, [session, sessionLoading, currentQuestion, generateQuestionMutation.isPending]);
 
   // Update server timer periodically
   useEffect(() => {
@@ -156,7 +157,7 @@ export function QuizInterface({ sessionId }: QuizInterfaceProps) {
     setSelectedAnswer(null);
   };
 
-  if (!session) {
+  if (!session || sessionLoading) {
     return <LoadingOverlay message="Loading quiz session..." />;
   }
 
